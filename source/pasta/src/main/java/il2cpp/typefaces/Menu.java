@@ -32,11 +32,8 @@ public class Menu
     protected WindowManager _wmManager;
     protected WindowManager.LayoutParams _wmParams;
     
-    // Добавленные поля для ключевой системы
-    private EditText _keyInput;
-    private LinearLayout _authLayout;
-    private boolean _isAuthenticated = false;
-    private TextView _logText;
+    // Флаг показа
+    private boolean _isAuthenticated = true; // авторизация перенесена в ActivityMain
     private boolean _isAttachedToWindow = false;
     
     protected void init(Context context) {
@@ -89,139 +86,9 @@ public class Menu
         _parentBox.addView(menulayout, 600, dpi(25));
     }
     
-    // Метод создания интерфейса авторизации
-    private void createAuthLayout() {
-        // Разрешаем фокус и ввод с клавиатуры на экране авторизации
-        int additional = 0;
-        if (Build.VERSION.SDK_INT >= 11) additional = WindowManager.LayoutParams.FLAG_SPLIT_TOUCH;
-        if (Build.VERSION.SDK_INT >= 3) additional |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
-        _wmParams.flags =
-            /* без FLAG_NOT_FOCUSABLE, чтобы EditText мог получать фокус */
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN |
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
-            additional;
-        if (_isAttachedToWindow) {
-            _wmManager.updateViewLayout(_parentBox, _wmParams);
-        }
-
-        _authLayout = new LinearLayout(context);
-        _authLayout.setOrientation(LinearLayout.VERTICAL);
-        _authLayout.setPadding(20, 20, 20, 20);
-        _authLayout.setGravity(Gravity.CENTER);
-        
-        GradientDrawable authBg = new GradientDrawable();
-        authBg.setColor(0xFF2D2D2D);
-        authBg.setCornerRadius(15);
-        authBg.setStroke(2, 0xFF555555);
-        _authLayout.setBackground(authBg);
-
-        // Заголовок
-        TextView authTitle = new TextView(context);
-        authTitle.setText("Authoization");
-        authTitle.setTextColor(0xFFFFFFFF);
-        authTitle.setTextSize(18);
-        authTitle.setGravity(Gravity.CENTER);
-        authTitle.setPadding(0, 0, 0, 20);
-        
-        // Метка для поля ввода
-        TextView keyLabel = new TextView(context);
-        keyLabel.setText("Enter key:");
-        keyLabel.setTextColor(0xFFFFFFFF);
-        keyLabel.setTextSize(14);
-        keyLabel.setPadding(0, 0, 0, 8);
-
-        // Поле ввода ключа
-        _keyInput = new EditText(context);
-        _keyInput.setHint("");
-        _keyInput.setTextColor(0xFFFFFFFF);
-        _keyInput.setHintTextColor(0xFF888888);
-        
-        GradientDrawable editTextBg = new GradientDrawable();
-        editTextBg.setColor(0xFF1A1A1A);
-        editTextBg.setCornerRadius(8);
-        editTextBg.setStroke(1, 0xFF555555);
-        _keyInput.setBackground(editTextBg);
-        
-        _keyInput.setPadding(20, 15, 20, 15);
-        _keyInput.setTextSize(14);
-        _keyInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        _keyInput.setSingleLine(true);
-        
-        // Поле для логов (красным)
-        _logText = new TextView(context);
-        _logText.setText("");
-        _logText.setTextColor(0xFFFF4C4C); // красный
-        _logText.setTextSize(12);
-        _logText.setPadding(0, 8, 0, 8);
-
-        // Кнопка входа
-        Button loginBtn = new Button(context);
-        loginBtn.setText("Login in");
-        loginBtn.setTextColor(0xFFFFFFFF);
-        loginBtn.setBackgroundColor(0xFF4CAF50);
-        loginBtn.setPadding(20, 15, 20, 15);
-        loginBtn.setTextSize(14);
-        
-        // Обработчик кнопки
-        loginBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checkAuth();
-            }
-        });
-        
-        // Обработчик нажатия Enter
-        _keyInput.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
-                    checkAuth();
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        // Добавляем элементы
-        LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 0, 0, 20);
-        
-        _authLayout.addView(authTitle, params);
-        _authLayout.addView(keyLabel, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        _authLayout.addView(_keyInput, params);
-        _authLayout.addView(_logText, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        _authLayout.addView(loginBtn, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        
-        // Показываем экран авторизации
-        _parentBox.addView(_authLayout, 400, 300);
-
-        // Прикрепляем контейнер к окну, если он ещё не прикреплён
-        if (!_isAttachedToWindow) {
-            _wmManager.addView(_parentBox, _wmParams);
-            _isAttachedToWindow = true;
-        }
-    }
-
-    // Метод проверки авторизации
-    private void checkAuth() {
-        String inputKey = _keyInput.getText().toString().trim();
-        String correctKey = "PLUTONIUM_FFSBZDHX38";
-        
-        if (inputKey.equals(correctKey)) {
-            _isAuthenticated = true;
-            _parentBox.removeView(_authLayout);
-            createMainMenu();
-            Toast.makeText(context, "Успешный вход!", Toast.LENGTH_SHORT).show();
-        } else {
-            _logText.setText("Invalid key!");
-            _keyInput.setText("");
-            _keyInput.setError("Попробуйте снова");
-        }
-    }
-    
     public Menu(Context context) {
         init(context);
-        createAuthLayout();
+        createMainMenu();
     }
     
     // Метод создания основного меню
