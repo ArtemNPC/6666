@@ -1,0 +1,401 @@
+package il2cpp.typefaces;
+
+import android.animation.*;
+import android.app.*;
+import android.content.*;
+import android.content.res.*;
+import android.graphics.*;
+import android.graphics.drawable.*;
+import android.os.*;
+import android.view.inputmethod.InputMethodManager;
+import il2cpp.*;
+import android.text.*;
+import android.view.Window.*; 
+import android.text.method.*;
+import android.graphics.Typeface;
+import android.util.*;
+import android.view.*;
+import android.widget.*;
+import android.view.animation.AlphaAnimation; 
+import android.view.animation.Animation;
+import java.io.*;
+import java.util.Objects;
+import android.widget.LinearLayout.LayoutParams;
+import java.util.ArrayList;
+import android.view.View.OnClickListener;
+import android.widget.ImageView;
+
+public class Menu
+{
+	protected int WIDTH,HEIGHT;
+    
+	public Typeface google(Context yes) {return Typeface.createFromAsset(yes.getAssets(), "Font.ttf");}
+	
+	protected Context context;
+	protected FrameLayout _parentBox;
+	protected LinearLayout __page;
+	protected ScrollView __scroll;
+	
+	public ArrayList<LinearLayout> __pages = new ArrayList<>();
+	
+	public ImageView _icon;
+	
+	boolean _isShow = false;
+	
+	LinearLayout menulayout,linear7,_scroll;
+TextView textview12;
+ImageView _close;
+
+	protected WindowManager _wmManager;
+	protected WindowManager.LayoutParams _wmParams;
+	
+	// Добавленные поля для ключевой системы
+	private EditText _keyInput;
+	private LinearLayout _authLayout;
+	private boolean _isAuthenticated = false;
+	
+	protected void init(Context context) {
+		
+		this.context = context;
+		
+		_parentBox = new FrameLayout(context);
+
+		_parentBox.setOnTouchListener(handleMotionTouch);
+		_wmManager = ((Activity)context).getWindowManager();
+		int aditionalFlags=0;
+		if (Build.VERSION.SDK_INT >= 11)
+			aditionalFlags = WindowManager.LayoutParams.FLAG_SPLIT_TOUCH;
+		if (Build.VERSION.SDK_INT >=  3)
+			aditionalFlags = aditionalFlags | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+		_wmParams = new WindowManager.LayoutParams(
+			WindowManager.LayoutParams.WRAP_CONTENT,
+			WindowManager.LayoutParams.WRAP_CONTENT,
+			0,//initialX
+			0,//initialy
+			WindowManager.LayoutParams.TYPE_APPLICATION,
+			WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+			WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN |
+			WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+			aditionalFlags,
+			PixelFormat.TRANSPARENT
+		);
+		_wmParams.gravity = Gravity.CENTER;
+	}
+	
+	public int dpi(float dp) {
+		float scale = context.getResources().getDisplayMetrics().density;
+		return (int) (dp * scale + 0.5f);
+	}
+	
+	public void showMenu() {
+		if (!_isAuthenticated) return;
+		
+		_close.setRotation(0);
+		_isShow = false;
+		_parentBox.removeAllViews();
+		_parentBox.addView(menulayout, 600, 600);
+	}
+
+	public void hideMenu() {
+		if (!_isAuthenticated) return;
+		
+		_close.setRotation(-90);
+		_isShow = true;
+		_parentBox.removeAllViews();
+		_parentBox.addView(menulayout, 600, dpi(25));
+	}
+	
+	// Метод создания интерфейса авторизации
+	private void createAuthLayout() {
+		_authLayout = new LinearLayout(context);
+		_authLayout.setOrientation(LinearLayout.VERTICAL);
+		_authLayout.setPadding(20, 20, 20, 20);
+		_authLayout.setGravity(Gravity.CENTER);
+		
+		GradientDrawable authBg = new GradientDrawable();
+		authBg.setColor(0xFF2D2D2D);
+		authBg.setCornerRadius(15);
+		authBg.setStroke(2, 0xFF555555);
+		_authLayout.setBackgroundDrawable(authBg);
+
+		// Заголовок
+		TextView authTitle = new TextView(context);
+		authTitle.setText("Аутентификация");
+		authTitle.setTextColor(0xFFFFFFFF);
+		authTitle.setTextSize(18);
+		authTitle.setTypeface(google(context));
+		authTitle.setGravity(Gravity.CENTER);
+		authTitle.setPadding(0, 0, 0, 20);
+		
+		// Поле ввода ключа
+		_keyInput = new EditText(context);
+		_keyInput.setHint("Введите ключ доступа...");
+		_keyInput.setTextColor(0xFFFFFFFF);
+		_keyInput.setHintTextColor(0xFF888888);
+		
+		// Создаем свой background для EditText
+		GradientDrawable editTextBg = new GradientDrawable();
+		editTextBg.setColor(0xFF1A1A1A);
+		editTextBg.setCornerRadius(8);
+		editTextBg.setStroke(1, 0xFF555555);
+		_keyInput.setBackground(editTextBg);
+		
+		_keyInput.setPadding(20, 15, 20, 15);
+		_keyInput.setTextSize(14);
+		_keyInput.setTypeface(google(context));
+		_keyInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+		_keyInput.setSingleLine(true);
+		
+		// Кнопка входа
+		Button loginBtn = new Button(context);
+		loginBtn.setText("Войти");
+		loginBtn.setTextColor(0xFFFFFFFF);
+		loginBtn.setBackgroundColor(0xFF4CAF50);
+		loginBtn.setPadding(20, 15, 20, 15);
+		loginBtn.setTextSize(14);
+		loginBtn.setTypeface(google(context));
+		
+		// Обработчик кнопки
+		loginBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				checkAuth();
+			}
+		});
+		
+		// Обработчик нажатия Enter в поле ввода (исправленная версия)
+		_keyInput.setOnKeyListener(new View.OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
+					checkAuth();
+					return true;
+				}
+				return false;
+			}
+		});
+
+		// Добавляем элементы
+		LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+		params.setMargins(0, 0, 0, 20);
+		
+		_authLayout.addView(authTitle, params);
+		_authLayout.addView(_keyInput, params);
+		_authLayout.addView(loginBtn, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+		
+		// Показываем экран авторизации
+		_parentBox.addView(_authLayout, 400, 300);
+	}
+
+	// Метод проверки авторизации
+	private void checkAuth() {
+		String inputKey = _keyInput.getText().toString().trim();
+		String correctKey = "PLUTONIUM_FFSBZDHX38";
+		
+		if (inputKey.equals(correctKey)) {
+			_isAuthenticated = true;
+			_parentBox.removeView(_authLayout);
+			createMainMenu(); // Создаем основное меню после успешной авторизации
+			Toast.makeText(context, "Успешный вход!", Toast.LENGTH_SHORT).show();
+		} else {
+			Toast.makeText(context, "Неверный ключ!", Toast.LENGTH_SHORT).show();
+			_keyInput.setText("");
+			_keyInput.setError("Попробуйте снова");
+		}
+	}
+	
+	public Menu(Context context)
+	{
+		init(context);
+		createAuthLayout();
+	}
+	
+	// Метод создания основного меню
+	private void createMainMenu() {
+		// Инициализируем основные компоненты меню
+		menulayout = new LinearLayout(context);
+		menulayout.setOrientation(LinearLayout.VERTICAL);
+		menulayout.setPadding(5, 5, 5, 5);
+		menulayout.setGravity(Gravity.TOP | Gravity.LEFT);
+		
+		GradientDrawable design = new GradientDrawable();
+		design.setColor(0xAA000000);
+		design.setCornerRadius(10);
+		design.setStroke(2, 0xFFFFFFFF);
+		menulayout.setBackground(design);
+		
+		// Header с кнопкой закрытия
+		linear7 = new LinearLayout(context);
+		linear7.setOrientation(LinearLayout.HORIZONTAL);
+		linear7.setPadding(5, 5, 5, 5);
+		linear7.setGravity(Gravity.CENTER_VERTICAL);
+		
+		GradientDrawable headerBg = new GradientDrawable();
+		headerBg.setColor(0xFF2D2D2D);
+		headerBg.setCornerRadii(new float[] { 10, 10, 10, 10, 0, 0, 0, 0 });
+		linear7.setBackground(headerBg);
+		
+		LayoutParams headerParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+		linear7.setLayoutParams(headerParams);
+		menulayout.addView(linear7);
+
+		// Кнопка закрытия
+		_close = new ImageView(context);
+		_close.setPadding(5, 5, 5, 5);
+		_close.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+		_close.setColorFilter(0xFFFFFFFF);
+		
+		LayoutParams closeParams = new LayoutParams(dpi(30), dpi(30));
+		_close.setLayoutParams(closeParams);
+		linear7.addView(_close);
+
+		// Заголовок меню
+		textview12 = new TextView(context);
+		textview12.setText("Mod Menu");
+		textview12.setPadding(10, 0, 0, 0);
+		textview12.setGravity(Gravity.CENTER_VERTICAL);
+		textview12.setTextColor(0xFFFFFFFF);
+		textview12.setTextSize(16);
+		textview12.setTypeface(google(context));
+		
+		LayoutParams titleParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+		textview12.setLayoutParams(titleParams);
+		linear7.addView(textview12);
+
+		// Основная область с контентом
+		_scroll = new LinearLayout(context);
+		_scroll.setOrientation(LinearLayout.VERTICAL);
+		_scroll.setPadding(10, 10, 10, 10);
+		
+		GradientDrawable contentBg = new GradientDrawable();
+		contentBg.setColor(0xAA1A1A1A);
+		contentBg.setCornerRadii(new float[] { 0, 0, 0, 0, 10, 10, 10, 10 });
+		_scroll.setBackground(contentBg);
+		
+		LayoutParams scrollParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+		scrollParams.weight = 1;
+		_scroll.setLayoutParams(scrollParams);
+		menulayout.addView(_scroll);
+		
+		// Инициализируем скролл и страницу
+		__scroll = new ScrollView(context);
+		__scroll.setFillViewport(true);
+		
+		__page = new LinearLayout(context);
+		__page.setOrientation(LinearLayout.VERTICAL);
+		
+		__scroll.addView(__page, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+		_scroll.addView(__scroll, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+		
+		// Добавляем страницу в список
+		__pages.clear();
+		__pages.add(__page);
+		
+		// Добавляем тестовые функции в меню
+		addFeature("Radar Hack", true);
+		addFeature("FOV Changer", false);
+		addFeature("Aimbot", true);
+		
+		// Обработчик клика по кнопке закрытия
+		_close.setOnClickListener(new OnClickListener() {
+			public void onClick(View v){
+				if (_isShow) {
+					showMenu();
+				} else {
+					hideMenu();
+				}
+			}
+		});
+		
+		// Показываем меню
+		showMenu();
+		_wmManager.addView(_parentBox, _wmParams);
+	}
+	
+	// Метод для добавления функций в меню
+	private void addFeature(String featureName, boolean isSwitch) {
+		LinearLayout featureLayout = new LinearLayout(context);
+		featureLayout.setOrientation(LinearLayout.HORIZONTAL);
+		featureLayout.setPadding(0, 5, 0, 5);
+		featureLayout.setGravity(Gravity.CENTER_VERTICAL);
+		
+		LayoutParams featureParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+		featureParams.setMargins(0, 0, 0, 10);
+		featureLayout.setLayoutParams(featureParams);
+		
+		// Название функции
+		TextView featureText = new TextView(context);
+		featureText.setText(featureName);
+		featureText.setTextColor(0xFFFFFFFF);
+		featureText.setTextSize(14);
+		featureText.setTypeface(google(context));
+		
+		LayoutParams textParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+		textParams.weight = 1;
+		featureText.setLayoutParams(textParams);
+		featureLayout.addView(featureText);
+		
+		if (isSwitch) {
+			// Switch для включения/выключения
+			Switch featureSwitch = new Switch(context);
+			featureSwitch.setTextColor(0xFFFFFFFF);
+			
+			featureLayout.addView(featureSwitch);
+		} else {
+			// Slider для числовых значений
+			SeekBar featureSlider = new SeekBar(context);
+			featureSlider.setMax(100);
+			featureSlider.setProgress(50);
+			
+			LayoutParams sliderParams = new LayoutParams(dpi(100), LayoutParams.WRAP_CONTENT);
+			featureSlider.setLayoutParams(sliderParams);
+			featureLayout.addView(featureSlider);
+		}
+		
+		__page.addView(featureLayout);
+	}
+	
+	View.OnTouchListener handleMotionTouch = new View.OnTouchListener()
+	{
+		private float initX;          
+		private float initY;
+		private float touchX;
+		private float touchY;
+
+		double clock=0;
+		
+		@Override
+		public boolean onTouch(View vw, MotionEvent ev)
+		{
+			if (!_isAuthenticated) return false;
+
+			switch (ev.getAction())
+			{
+				case MotionEvent.ACTION_DOWN:
+
+					initX = _wmParams.x;
+					initY = _wmParams.y;
+					touchX = ev.getRawX();
+					touchY = ev.getRawY();
+					clock = System.currentTimeMillis();
+					break;
+
+				case MotionEvent.ACTION_MOVE:
+					_wmParams.x = (int)initX + (int)(ev.getRawX() - touchX);
+
+					_wmParams.y = (int)initY + (int)(ev.getRawY() - touchY);
+
+					_wmManager.updateViewLayout(vw, _wmParams);
+					break;
+
+				case MotionEvent.ACTION_UP:
+					if (!_isShow && (System.currentTimeMillis() < (clock + 200)))
+					{
+						showMenu();
+					}
+					break;
+			}
+			return true;
+		}
+	};
+}
